@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <title>Haplo Coding Challenge</title>
+
+      <style>
+        table, th, td {
+          border: 1px solid black;
+        }
+        .inline {
+          display: inline;
+        }
+
+        .linkButton {
+          background: none;
+          border: none;
+          color: blue;
+          cursor: pointer;
+          font-size: 1em;
+          font-family: serif;
+          text-decoration: underline;
+        }
+        .linkButton:focus {
+          outline: none;
+        }
+        .linkButton:active {
+          color:red;
+        }
+
+      </style>
+  </head>
+  <body>
+    {{> resetStoryForm}}
+    <table>
+      <tr>
+        <td>
+        </td>
+        <td>
+          {{#if sentenceOne}}
+            {{> afterFormSubmit linkNumber="linkOne" sentence=sentenceOne}}
+          {{else}}
+            {{> beforeFormSubmit sentenceNumber="sentenceOne"}}
+          {{/if}}
+        </td>
+        <td>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          {{#if sentenceTwo}}
+            {{> afterFormSubmit linkNumber="linkTwo" sentence=sentenceTwo}}
+          {{else}}
+            {{> beforeFormSubmit sentenceNumber="sentenceTwo"}}
+          {{/if}}
+        </td>
+        <td>
+          <p>
+            {{sentenceZero}}
+          </p>
+        </td>
+        <td>
+          {{#if sentenceThree }}
+            {{> afterFormSubmit linkNumber="linkThree" sentence=sentenceThree}}
+          {{else}}
+            {{> beforeFormSubmit sentenceNumber="sentenceThree"}}
+          {{/if}}
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+        </td>
+        <td>
+          {{#if sentenceFour}}
+            {{> afterFormSubmit linkNumber="linkFour" sentence=sentenceFour}}
+          {{else}}
+            {{> beforeFormSubmit sentenceNumber="sentenceFour"}}
+          {{/if}}
+        </td>
+        <td>
+        </td>
+      </tr>
+
+    </table>
+  </body>
+</html>
