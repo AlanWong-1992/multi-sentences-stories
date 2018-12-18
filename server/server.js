@@ -1,7 +1,8 @@
 const {addSentence} = require('./utils/addSentence');
 const bodyParser = require('body-parser');
+const {checkSentencesExist} = require('./utils/checkSentencesExist');
 const express = require('express');
-const {findSentencesInList} = require('./utils/findSentencesInList');
+const {findNextSentences} = require('./utils/findNextSentences');
 const {findSentencesIndex} = require('./utils/findSentencesIndex');
 const hbs = require('hbs');
 const path = require('path');
@@ -44,31 +45,6 @@ let sentencesList = [{
   linkedTo: []
 }];
 
-let historyMode = false;
-
-// const findIdInList = (postValue, sentencesList, sentences) => {
-//   console.log('This is running and the postvalue is: ', postValue);
-//   let foundSentence;
-//   if (sentences.linkedTo) {
-//     console.log('Is sentences linkedTo: ', sentences.linkedTo[0]);
-//       sentences.linkedTo.filter((array) => {
-//       foundLink = array[0] === postValue;
-//       foundSentencesId = array[1];
-//       console.log('foundLink: ', foundLink);
-//       console.log('foundSentencesId: ', foundSentencesId);
-//       if (foundLink && foundSentencesId) {
-//           sentencesList.filter((theSentences) => {
-//           if (theSentences.sentenceZero === postValue) {
-//             console.log('We found the sentences with this Id: ', theSentences);
-//             foundSentence = theSentences;
-//           }
-//         });
-//       };
-//     });
-//   };
-//   return foundSentence;
-// };
-
 const app = express();
 
 hbs.registerPartials(viewsPath);
@@ -95,42 +71,23 @@ app.post('/', (req, res) => {
   // to process the request
   if (postSentenceKeys.includes(Object.keys(req.body)[0])) {
     addSentence(sentences, req.body);
-    const newSentences = sentencesList.filter((theSentences) => {
-      const postSentenceKey = Object.keys(req.body)[0];
-      const postSentenceValue = Object.values(req.body)[0];
-      if (theSentences.sentenceZero === sentences.sentenceZero) {
-        theSentences[postSentenceKey] = postSentenceValue;
-        return theSentences;
-      }
-    });
-    console.log('sentencesList: ', sentencesList);
+    const newSentences = updateSentences(sentences, sentencesList, req);
+    // console.log('New Sentences: ', newSentences);
+    // console.log('sentencesList: ', sentencesList);
     res.redirect('/');
 
   } else if (postLinkKeys.includes(Object.keys(req.body)[0])) {
     console.log('Current Sentences Object: ', sentences);
     const postValue = Object.values(req.body)[0];
-    const foundNextItem = sentencesList.filter((theSentences) => {
-      return sentences.linkedTo.find((valueAndId) => {
-        if (theSentences.sentenceZero === postValue && theSentences.id === valueAndId[1]) {
-          console.log ('WE FOUND A MATCH!');
-          return theSentences;
-        }
-      });
-    })[0];
+    const foundNextItem = findNextSentences(postValue, sentences, sentencesList);
 
     if (foundNextItem) {
       console.log('Found Next Item: ', foundNextItem);
-      //Check to see if there is a next object
       Object.assign(sentences, foundNextItem);
+
     } else {
-      // Pushing the sentence into sentencesList only if it does not exist in the sentencesList.
-      const sentencesExist = sentencesList.filter((theSentences) => {
-        if (theSentences.id === sentences.id && theSentences.sentenceZero === sentences.sentenceZero) {
-          return theSentences;
-        }
-      })[0];
+      const sentencesExist = checkSentencesExist(sentences, sentencesList);
       if (!sentencesExist) {sentencesList.push(Object.assign({}, sentences));} // Only push object if there does not exist a sentence.
-      ///////////////
 
       // Set previousSentences so I can update the linkedTo values
       previousSentences = Object.assign({}, sentences);
@@ -147,17 +104,13 @@ app.post('/', (req, res) => {
       // console.log('SentencesList: ', sentencesList)
 
       // Linking the two objects together
-      const foundSentenceIndex = sentencesList.findIndex((theSentences) => {
-        if (theSentences.id === previousSentences.id && theSentences.sentenceZero === previousSentences.sentenceZero) {
-          return theSentences;
-        }
-      });
+      const foundSentenceIndex = findSentencesIndex(sentencesList, previousSentences);
 
       sentencesList.splice(foundSentenceIndex, 1, previousSentences);
       // console.log('Printing SentencesList:');
-      sentencesList.forEach((theSentences) => {
-        console.log(theSentences);
-      });
+      // sentencesList.forEach((theSentences) => {
+      //   console.log(theSentences);
+      // });
 
     }
     console.log('Printing Sentences List');
@@ -183,7 +136,6 @@ app.post('/', (req, res) => {
     }
     console.log('found Sentences value: ', foundSentences);
     Object.assign(sentences, sentencesList[0]);
-    // historyMode = true;
     console.log('Sentences Object on Reset: ', sentences);
     res.redirect('/')
 

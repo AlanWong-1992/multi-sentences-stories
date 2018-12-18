@@ -1,6 +1,6 @@
-const findSentencesIndex = (sentencesList, sentences) => {
+const findSentencesIndex = (sentencesList, previousSentences) => {
   return sentencesList.findIndex((theSentences) => {
-    if (sentences.sentenceZero === theSentences.sentenceZero) {
+    if (theSentences.id === previousSentences.id && theSentences.sentenceZero === previousSentences.sentenceZero) {
       return theSentences;
     }
   });
