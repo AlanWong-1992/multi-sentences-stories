@@ -4,12 +4,12 @@ const {checkSentencesExist} = require('./utils/checkSentencesExist');
 const express = require('express');
 const {findNextSentences} = require('./utils/findNextSentences');
 const {findSentencesIndex} = require('./utils/findSentencesIndex');
+const {findSentencesInList} = require('./utils/findSentencesInList');
 const hbs = require('hbs');
 const path = require('path');
-const {populateSentencesList} = require('./utils/populateSentencesList');
-const {pushSentences} = require('./utils/pushSentences');
 const {resetSentences} = require('./utils/resetSentences');
-const {updateSentences} = require('./utils/updateSentences');
+const {updateSentencesInList} = require('./utils/updateSentencesInList');
+const {updateSentencesAndPreviousSentences} = require('./utils/updateSentencesAndPreviousSentences');
 const viewsPath = path.join(__dirname, '/../views/partials');
 
 // key names during POST requests for forms and links
@@ -24,6 +24,7 @@ let previousSentences = {
 
 }
 
+// current sentences
 let sentences = {
   id: count.count,
   sentenceZero: 'Start your story here!',
@@ -64,20 +65,21 @@ app.get('/', (req, res) => {
 });
 
 app.post('/', (req, res) => {
-  console.log(req.body);
+  console.log('POST Body: ', req.body);
   // console.log(sentencesList);
   // if/else-if statements check to see if the key of the POST method is in
   // the postSentenceKeys and postLinkKeys arrays, if they are then proceed
   // to process the request
   if (postSentenceKeys.includes(Object.keys(req.body)[0])) {
+    console.log('Before addSentence sentences: ', sentences);
     addSentence(sentences, req.body);
-    const newSentences = updateSentences(sentences, sentencesList, req);
-    // console.log('New Sentences: ', newSentences);
-    // console.log('sentencesList: ', sentencesList);
+    console.log('Before updateSentences sentences: ', sentences);
+    updateSentencesInList(sentences, sentencesList, req);
+    console.log('After updateSentencesInList sentences: ', sentences);
     res.redirect('/');
 
   } else if (postLinkKeys.includes(Object.keys(req.body)[0])) {
-    console.log('Current Sentences Object: ', sentences);
+    // console.log('Current Sentences Object: ', sentences);
     const postValue = Object.values(req.body)[0];
     const foundNextItem = findNextSentences(postValue, sentences, sentencesList);
 
@@ -86,27 +88,32 @@ app.post('/', (req, res) => {
       Object.assign(sentences, foundNextItem);
 
     } else {
-      const sentencesExist = checkSentencesExist(sentences, sentencesList);
-      if (!sentencesExist) {sentencesList.push(Object.assign({}, sentences));} // Only push object if there does not exist a sentence.
+      // Add item to the sentencesList or clear if it is the last path
+      const sentencesExist = checkSentencesExist(postValue, sentences, sentencesList);
+      console.log('Sentences Object: ', sentences);
+      console.log('sentencesExist: ', sentencesExist);
+      if (!sentencesExist) sentencesList.push(Object.assign({}, sentences)); // Only push object if there does not exist a sentences.
 
-      // Set previousSentences so I can update the linkedTo values
-      previousSentences = Object.assign({}, sentences);
-      count.count++;
-      resetSentences(sentences);
-      sentences.id = count.count;
-      sentences.sentenceZero = Object.values(req.body)[0];
-      if (!sentences.linkedTo) {sentences.linkedTo = []};
-      previousSentences.linkedTo.push([sentences.sentenceZero, sentences.id]);
+      //Set previousSentences so I can update the linkedTo values
+      previousSentences = updateSentencesAndPreviousSentences(previousSentences, sentences, count, req);
+      // previousSentences = Object.assign({}, sentences);
+      // count.count++;
+      // resetSentences(sentences);
+      // sentences.id = count.count;
+      // sentences.sentenceZero = Object.values(req.body)[0];
+      // if (!sentences.linkedTo) {sentences.linkedTo = []};
+      // previousSentences.linkedTo.push([sentences.sentenceZero, sentences.id]);
 
-      // console.log('previousSentences', previousSentences);
+      console.log('previousSentences outside of function: ', previousSentences);
       // console.log('sentences', sentences);
       //
-      // console.log('SentencesList: ', sentencesList)
-
+      // console.log('SentencesList: ', sentencesList);
+      // console.log('previousSentences: ', previousSentences);
+`     `
       // Linking the two objects together
-      const foundSentenceIndex = findSentencesIndex(sentencesList, previousSentences);
-
-      sentencesList.splice(foundSentenceIndex, 1, previousSentences);
+      const foundSentencesIndex = findSentencesIndex(sentencesList, previousSentences);
+      console.log('foundSentecesIndex: ', foundSentencesIndex);
+      if (foundSentencesIndex > -1) sentencesList.splice(foundSentencesIndex, 1, previousSentences);
       // console.log('Printing SentencesList:');
       // sentencesList.forEach((theSentences) => {
       //   console.log(theSentences);
@@ -124,19 +131,19 @@ app.post('/', (req, res) => {
     console.log('Reset Story');
     console.log('Sentences Object before reset: ', sentences);
 
-    const foundSentences = sentencesList.filter((theSentences) => {
-      if (theSentences.id === sentences.id && theSentences.sentenceZero === sentences.sentenceZero) {
-        console.log('On Reset we found a match');
-        return theSentences;
-      };
-    })[0];
+    const foundSentences = findSentencesInList(sentencesList, sentences);
 
     if (!foundSentences) {
       sentencesList.push(Object.assign({}, sentences));
     }
     console.log('found Sentences value: ', foundSentences);
+    // set sentences to the first object in the sentencesList.
     Object.assign(sentences, sentencesList[0]);
     console.log('Sentences Object on Reset: ', sentences);
+    console.log('SentencesList on Reset: ');
+    sentencesList.forEach((theSentences) => {
+      console.log(theSentences);
+    });
     res.redirect('/')
 
   } else {
