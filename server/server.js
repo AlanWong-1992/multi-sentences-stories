@@ -65,12 +65,14 @@ app.get('/', (req, res) => {
 });
 
 app.post('/', (req, res) => {
+  console.log(req.body);
   // if/else-if statements check to see if the key of the POST method is in
   // the postSentenceKeys and postLinkKeys arrays, if they are then proceed
   // to process the request
   if (postSentenceKeys.includes(Object.keys(req.body)[0])) {
     addSentence(sentences, req.body);
     updateSentencesInList(sentences, sentencesList, req);
+    sentencesList.forEach((obj) => console.log(obj));
     res.redirect('/');
 
   } else if (postLinkKeys.includes(Object.keys(req.body)[0])) {
@@ -95,7 +97,8 @@ app.post('/', (req, res) => {
       const foundSentencesIndex = findSentencesIndex(sentencesList, previousSentences);
       if (foundSentencesIndex > -1) sentencesList.splice(foundSentencesIndex, 1, previousSentences);
 
-    }
+    };
+    sentencesList.forEach((obj) => console.log(obj));
 
     res.redirect('/');
 
@@ -109,7 +112,7 @@ app.post('/', (req, res) => {
 
     // set sentences to the first object in the sentencesList.
     Object.assign(sentences, sentencesList[0]);
-
+    sentencesList.forEach((obj) => console.log(obj));
     res.redirect('/')
 
   } else {
